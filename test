@@ -1,0 +1,44 @@
+from datetime import datetime, timedelta
+import re
+
+def count_2_minute_gaps(transcript_file):
+    # Open the transcript file
+    with open(transcript_file, 'r') as file:
+        lines = file.readlines()
+
+    # Initialize counters
+    agent_last_time = None
+    user_last_time = None
+    count = 0
+
+    # Regex pattern to extract the timestamp
+    timestamp_pattern = r'\b\d{2}:\d{2}:\d{2}\b'
+
+    # Iterate through each line in the transcript
+    for line in lines:
+        # Find timestamp matches in the line
+        timestamps = re.findall(timestamp_pattern, line)
+
+        # Extract the last timestamp from the line
+        timestamp_str = timestamps[-1] if timestamps else None
+
+        if timestamp_str:
+            # Convert timestamp string to datetime object
+            timestamp = datetime.strptime(timestamp_str, "%H:%M:%S")
+
+            # Check if it's an agent or user message
+            if line.startswith("Agent:"):
+                if agent_last_time is not None and (timestamp - agent_last_time) >= timedelta(minutes=2):
+                    count += 1
+                agent_last_time = timestamp
+            elif line.startswith("User:"):
+                if user_last_time is not None and (timestamp - user_last_time) >= timedelta(minutes=2):
+                    count += 1
+                user_last_time = timestamp
+
+    return count
+
+# Example usage
+transcript_file = "chat_transcript.txt"
+result = count_2_minute_gaps(transcript_file)
+print("Number of 2-minute gaps between agent and user:", result)
